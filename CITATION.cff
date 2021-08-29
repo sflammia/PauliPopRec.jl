@@ -1,0 +1,13 @@
+# YAML 1.2
+---
+authors: 
+  -
+    family-names: Flammia
+    given-names: "Steven T."
+cff-version: "1.1.0"
+date-released: 2021-08-29
+doi: "10.5281/ZENODO.5327656"
+message: "If you use this software, you can cite it with the following metadata:"
+title: PauliPopRec
+version: "0.1"
+...
