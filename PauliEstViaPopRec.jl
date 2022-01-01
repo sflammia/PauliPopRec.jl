@@ -31,20 +31,16 @@ function Measure(A::Matrix{Int8},p::Vector{Float64},P::Matrix{Int8})::Matrix{Int
     star(A,C)
 end
 
-# Given a list of measurement outcomes R, estimate the probability of all-0.
-EstProb0(R::Matrix{Int8})::Float64 = (counts(sum(R, dims = 2),0:size(R)[2])' * (-1/2).^(0:size(R)[2]) )/size(R)[1]
-
-# Same as EstProb0, except we allow a nontrivial pauli B, where B might
-# be defined only on the first t qubits.
-function EstProb(B::Vector{Int8},A::Matrix{Int8},R::Matrix{Int8})::Float64
-    if all(B .== 0)
-        return EstProb0(R)
-    end
+# Given a list of measurement outcomes R, and a list A of "B adjusted" inputs,
+# estimate the probability of all-0 using the estimator with lower variance.
+# Here w[k] = (-1/2)^(k-1) / m is the weighing factor for the estimator. 
+# This estimator assumes B is not the all-0 vector already. 
+function EstProb(B::Vector{Int8},A::Matrix{Int8},R::Matrix{Int8},w::Vector{Float64})::Float64
     t = length(B)
     m = size(A)[1]
     AB = star(A[:,1:t], B' .+ zeros(Int8,(m,t)) )
-    newR = AB .⊻  R[:,1:t]
-    EstProb0(newR) - EstProb0(AB)
+    ABR = AB .⊻  R[:,1:t]
+    w[1:(t+1)]' * (counts(sum(ABR, dims = 2),0:t) - counts(sum(AB, dims = 2),0:t) )
 end
 
 # Estimate the whole channel using branch and prune from probe states A
@@ -52,9 +48,10 @@ end
 # This implementation has a bad runtime of O(m*n^2/𝛿). We could save a factor of n
 # by recycling the marginal estimates from round j and using them in round j+1.
 function EstChan(A::Matrix{Int8},R::Matrix{Int8},𝛿::Float64)::Tuple{Vector{Float64}, Matrix{Int8}}
-    n = size(A)[2]
+    (m,n) = size(A)
     p = Float64[]
     P = Vector{Int8}[[0],[1],[2],[3]]
+    w = (-1/2).^(0:n) / m
     for j = 1:n-1
         q = Float64[]
         Q = Array{Int8,1}[]
@@ -62,7 +59,7 @@ function EstChan(A::Matrix{Int8},R::Matrix{Int8},𝛿::Float64)::Tuple{Vector{Fl
             prefx = P[s]
             for c = Int8.(0:3)
                 B = vcat(prefx, c)
-                est = EstProb(B, A, R)
+                est = EstProb(B, A, R, w)
                 if est > 𝛿
                     q = vcat(q, est)
                     push!(Q,B)
@@ -71,6 +68,12 @@ function EstChan(A::Matrix{Int8},R::Matrix{Int8},𝛿::Float64)::Tuple{Vector{Fl
         end
         p = q
         P = Q
+    end
+    # finally, check the zero string
+    est = w' * counts(sum(R, dims = 2),0:n)
+    if est > 𝛿
+        pushfirst!(p, est)
+        pushfirst!(P, zeros(Int8,n))
     end
     (p,vcat(P'...))
 end
