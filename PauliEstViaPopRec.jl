@@ -35,12 +35,10 @@ end
 # estimate the probability of all-0 using the estimator with lower variance.
 # Here w[k] = (-1/2)^(k-1) / m is the weighing factor for the estimator. 
 # This estimator assumes B is not the all-0 vector already. 
-function EstProb(B::Vector{Int8},A::Matrix{Int8},R::Matrix{Int8},w::Vector{Float64})::Float64
-    t = length(B)
-    m = size(A)[1]
-    AB = star(A[:,1:t], B' .+ zeros(Int8,(m,t)) )
-    ABR = AB .⊻  R[:,1:t]
-    w[1:(t+1)]' * (counts(sum(ABR, dims = 2),0:t) - counts(sum(AB, dims = 2),0:t) )
+function EstProb(B::Vector{Int8},A::Matrix{Int8},R::Matrix{Int8},w::Vector{Float64},t::Integer)::Float64
+    AB = star(A, B' .+ zeros(Int8,size(A)) )
+    ABR = AB .⊻  R
+    w' * (counts(sum(ABR, dims = 2),0:t) - counts(sum(AB, dims = 2),0:t) )
 end
 
 # Estimate the whole channel using branch and prune from probe states A
@@ -52,14 +50,17 @@ function EstChan(A::Matrix{Int8},R::Matrix{Int8},𝛿::Float64)::Tuple{Vector{Fl
     p = Float64[]
     P = Vector{Int8}[[0],[1],[2],[3]]
     w = (-1/2).^(0:n) / m
-    for j = 1:n-1
+    for j = 2:n
         q = Float64[]
         Q = Array{Int8,1}[]
+        AA = A[:,1:j]
+        RR = R[:,1:j]
+        ww = w[1:(j+1)]
         for s = 1:length(P)
             prefx = P[s]
             for c = Int8.(0:3)
                 B = vcat(prefx, c)
-                est = EstProb(B, A, R, w)
+                est = EstProb(B, AA, RR, ww, j)
                 if est > 𝛿
                     q = vcat(q, est)
                     push!(Q,B)
