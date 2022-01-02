@@ -79,20 +79,21 @@ function EstChan(A::Matrix{Int8},R::Matrix{Int8},𝛿::Float64)::Tuple{Vector{Fl
     (p,vcat(P'...))
 end
 
-# needed for representing Pauli channels as sparse vectors
-using SparseArrays
+# represent a sparse Pauli channel as a dictionary
+sparseP(p::Vector{Float64},P::Matrix{Int8})::Dict{Vector{Int8},Float64} = 
+    Dict{Vector{Int8},Float64}( [P[j,:] for j in 1:size(P)[1] ] .=> p )
 
-# represent the channel as a sparse array by converting each Pauli to an Int
-function sparseP(p::Vector{Float64},P::Matrix{<:Integer})::SparseVector{Float64, Int64}
-    n = size(P)[2]
-    num = (4 .^ (n-1:-1:0))
-    sparsevec((P * num) .+ 1, p, 4^n)
-end
-
-# compute the total variation distance between two sparse Pauli channels
-tvd(p::Vector{Float64},P::Matrix{Int8},q::Vector{Float64},Q::Matrix{Int8})::Float64 = tvd(sparseP(p,P),sparseP(q,Q))
-tvd(pP,qQ)::Float64 = sum(abs,qQ-pP)/2
+# compute the total variation distance between two Pauli dictionaries
+tvd(p::Vector{Float64},P::Matrix{Int8},q::Vector{Float64},Q::Matrix{Int8})::Float64 = 
+    tvd(sparseP(p,P),sparseP(q,Q))
+tvd(pP::Dict{Vector{Int8},Float64},qQ::Dict{Vector{Int8},Float64})::Float64 = 
+    sum(abs,values(merge(-,pP,qQ)))/2
 
 # Brute force compute the estimator on *all* the Paulis. Don't use with large n!
-EstAll(A,R) = EstAll(A,R,size(A)[2])
-EstAll(A,R,n::Integer) = [EstProb(reverse(digits(j,base=4,pad=n)),A,R) for j = 0:4^n-1]
+EstAll(A::Matrix{Int8},R::Matrix{Int8})::Vector{Float64} = EstAll(A,R,size(A)[1],size(A)[2])
+function EstAll(A::Matrix{Int8},R::Matrix{Int8},m::Integer,n::Integer)::Vector{Float64}
+    @assert n < 6
+    w = (-1/2).^(0:n) / m
+    p0 = w' * counts(sum(R, dims = 2),0:n)
+    pushfirst!([EstProb(reverse(digits(Int8, j,base=4,pad=n)),A,R,w,n) for j = 1:4^n-1], p0)
+end
