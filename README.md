@@ -1,34 +1,33 @@
-# Pauli error estimation via population recovery
+# PauliPopRec.jl: 
+
+## Pauli error estimation via population recovery
 
 This is an implementation of the algorithm in S. T. Flammia and R. O'Donnell, "Pauli error estimation via population recovery", *Quantum* **5**, 549 (2021); arXiv:2105.02885. 
 
 
 ```julia
-# load the functions
-include("PauliEstViaPopRec.jl")
+# load the package
+using PauliPopRec
 ```
 
 We consider an example with $n=5$ qubits and $k=25$ nonzero Pauli error probabilities sampled at random. With $m=10^6$ samples, we don't expect to be able to reconstruct error rates with probabilities less than about $10^{-3}$. 
 
 
 ```julia
+# Define your experiment
 n = 5 # number of qubits
 m = 10^6 # number of measurements
+A = rand(Int8.(1:3),m,n) # get m random probe states
+
+# Define a simulated Pauli channel
 k = 25 # size of channel support
 δ = 0.2 # probability of some nontrivial error occurring
+P = randpaulichannel(n,k,δ)
 
-# Define a Pauli channel as a tuple (p,P), 
-# where p is a list of probabilities and P are Pauli row vectors (0,1,2,3)
-(p,P) = RandomPauliChannel(n,k,δ)
+# Obtain the simulation results
+R = probepaulichannel(P,A)
 
-# get m random probe states
-A = rand(Int8.(1:3),m,n)
-
-# Measure the channel (p,P) using the probe states A
-R = Measure(A,p,P)
-
-# convert the tuple (p,P) into a dictionary for ease of comparison
-pP = sparseP(p,P)
+P
 ```
 
 
@@ -66,8 +65,7 @@ We can run the algorithm with a specific choice of threshold value for pruning. 
 
 ```julia
 ϵ = 1/sqrt(m) # pick a simple choice for the thresholding value
-@time (q,Q) = EstChan(A,R,ϵ)
-qQ = sparseP(q,Q)
+@time Q = pauli_poprec(A,R,ϵ)
 ```
 
 ```julia
@@ -106,7 +104,7 @@ Here is the total variation distance:
 
 
 ```julia
-tvd(pP,qQ)
+pauli_tvd(P,Q)
 ```
 
 
@@ -118,8 +116,8 @@ The error bars are fairly tight as well.
 
 
 ```julia
-σ = EstChanErrorBars(A,Q,R)
-mean(σ)
+σ = pauli_stderr(Q,A,R)
+sum(σ)/length(σ)
 ```
 
 
@@ -131,9 +129,8 @@ What about the estimates that we threw away with our choice of threshold? We can
 
 
 ```julia
-@time (s,S) = EstAll(A,R)
-sS = sparseP(s,S)
-tvd(pP,sS)
+@time S = pauli_totalrecall(A,R)
+pauli_tvd(P,S)
 ```
 
 ```julia
@@ -154,19 +151,19 @@ using Plots
 
 ```julia
 # convert the dictionary key quaternary digits to plotable numbers
-keys2num(kK,n) = hcat(collect(keys(kK))...)' * (4 .^((n-1):-1:0))
-vals2num(kK) = collect(values(kK))
+keys2num(P,n) = hcat(collect(keys(P))...)' * (4 .^((n-1):-1:0))
+vals2num(P) = collect(values(P))
 
-scatter(keys2num(pP,n), vals2num(pP), 
+scatter(keys2num(P,n), vals2num(P), 
     yaxis = ("log10(p)",:log10, [1e-4,1e-1]),
     xaxis = "Pauli number",
     label = "p (true)", markershape = :x, markersize = 4)
-scatter!(keys2num(qQ,n), vals2num(qQ),
+scatter!(keys2num(Q,n), vals2num(Q),
     label = "q (estimate)", markershape = :hline, markersize = 6,
     markerstrokecolor = :auto, yerror = σ)
-scatter!(keys2num(sS,n), vals2num(sS),
+scatter!(keys2num(S,n), vals2num(S),
     label = "all estimates", markershape = :+, markersize = 3, markeralpha = .3)
 ```
 
-![svg](fig.svg)
+![svg](docs/fig.svg)
 
