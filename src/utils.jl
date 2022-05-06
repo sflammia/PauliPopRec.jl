@@ -74,6 +74,24 @@ julia> star(A,B)
 1×4 Matrix{Int8}:
  0  1  1  0
 ```
+If we input a matrix A and a vector B, then B will broadcast across A (assuming that the dimensions match the broadcast rules). For example:
+```
+julia> A = [1 2; 2 3; 3 1]
+3×2 Matrix{Int64}:
+ 1  2
+ 2  3
+ 3  1
+
+julia> B = [1 3]
+1×2 Matrix{Int64}:
+ 1  3
+
+julia> star(A,B)
+3×2 Matrix{Int8}:
+ 0  1
+ 1  0
+ 1  1
+```
 """
 star(A::Array{<:Integer},B::Array{<:Integer})::Array{Int8} = ((A .>> 1) .& B) .⊻ ((B .>> 1) .& A)
 
@@ -90,6 +108,6 @@ function individual_recovery(B::Vector{<:Integer}, A::Matrix{<:Integer}, R::Matr
     if all(B .== 0)
         return w' * (counts(sum(R, dims = 2),0:n))
     end
-    AB = star(A, B' .+ zeros(eltype(B),size(A)) ) # copy B so it adds to A row-wise.
+    AB = star(A, hcat(B...) ) # hcat so that B broadcasts A row-wise.
     w' * (counts(sum(AB .⊻  R, dims = 2),0:n) - counts(sum(AB, dims = 2),0:n) )
 end
