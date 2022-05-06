@@ -12,7 +12,7 @@ To get started with a little more explanation, see the [tutorial notebook](https
 using PauliPopRec
 ```
 
-We consider an example with $n=5$ qubits and $k=25$ nonzero Pauli error probabilities sampled at random. With $m=10^6$ samples, we don't expect to be able to reconstruct error rates with probabilities less than about $10^{-3}$. 
+We consider an example with `n = 5` qubits and `k = 25` nonzero Pauli error probabilities sampled at random. With `m = 10^6` samples, we don't expect to be able to reconstruct error rates with probabilities less than about 10<sup>-3</sup>. 
 
 
 ```julia
@@ -62,7 +62,7 @@ Dict{Vector{Int8}, Float64} with 25 entries:
   [2, 2, 3, 0, 0] => 0.00238201
 ```
 
-We can run the algorithm with a specific choice of threshold value for pruning. Here we just choose $1/\sqrt{m}$, even though the rigorous theorem requires using some log factors. We get a pretty accurate reconstruction, as quantified by the TVD.
+We can run the algorithm with a specific choice of threshold value for pruning. Here we just choose $1/\sqrt{m}$, even though the rigorous theorem requires using some log factors. We get a pretty accurate reconstruction, as quantified by the total variation distance (TVD).
 
 
 ```julia
@@ -102,7 +102,7 @@ Dict{Vector{Int8}, Float64} with 24 entries:
   [2, 2, 3, 0, 0] => 0.00242184
 ```
 
-Here is the total variation distance:
+Here is the TVD:
 
 
 ```julia
