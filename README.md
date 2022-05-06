@@ -1,8 +1,10 @@
-# PauliPopRec.jl: 
+# PauliPopRec.jl
 
 ## Pauli error estimation via population recovery
 
-This is an implementation of the algorithm in S. T. Flammia and R. O'Donnell, "Pauli error estimation via population recovery", *Quantum* **5**, 549 (2021); arXiv:2105.02885. 
+This is an implementation of the algorithm in S. T. Flammia and R. O'Donnell, "Pauli error estimation via population recovery", *Quantum* **5**, 549 (2021); [arXiv:2105.02885](https://arxiv.org/abs/2105.02885). 
+
+To get started with a little more explanation, see the [tutorial notebook](https://github.com/sflammia/PauliPopRec/blob/main/docs/PauliPopRecTutorial.ipynb). Here is a rough sketch of how to use this package to estimate Pauli error rates. 
 
 
 ```julia
