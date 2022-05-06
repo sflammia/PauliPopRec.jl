@@ -1,7 +1,7 @@
 name = "PauliPopRec"
 uuid = "8be9b746-4e04-44ea-bfaf-e6e65ad4ae85"
 authors = ["Steve Flammia <sflammia@gmail.com>"]
-version = "0.0.1"
+version = "0.0.2"
 
 [deps]
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
