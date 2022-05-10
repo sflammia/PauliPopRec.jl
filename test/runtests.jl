@@ -53,6 +53,14 @@ issimplex(p) = sum(p) ≈ 1 && all( p .≥ 0)
     C = Int8[0 1; 0 1; 0 1]
     @test PauliPopRec.star(A,B) == C
 
+    # Test the three-argument version of star
+    Ax, Az = PauliPopRec.bits(A)
+    B = [1, 3]
+    C = Int8[0 1; 1 0; 1 1]
+    # First test this decomposition of bits
+    @test A == eltype(A)(2) .* Az .+ Ax
+    # Now test correctness
+    @test PauliPopRec.star(B,Ax,Az) == C
 
     ### Testing individual_recovery
 
@@ -60,19 +68,21 @@ issimplex(p) = sum(p) ≈ 1 && all( p .≥ 0)
     n = 2; m = 3;
     B = zeros(Int8,2)
     A = ones(Int8,m,n)
+    Ax = Int8.(rem.(A,2))
+    Az = A .>> 1
     R = [0 0; 0 1; 1 0] # hamming weights are 0, 1, 1.
     w = (-1/2).^(0:2) 
-    est = PauliPopRec.individual_recovery(B,A,R,w,n)
+    est = PauliPopRec.individual_recovery(B,Ax,Az,R,w,n)
     # answer should be 1, since 1*(-1/2)^0 + 2*(-1/2)^1 = 0
     @test est ≈ 0
 
     B = ones(Int8,2)
-    est = PauliPopRec.individual_recovery(B,A,R,w,n)
+    est = PauliPopRec.individual_recovery(B,Ax,Az,R,w,n)
     # answer should be -3 in this example
     @test est ≈ -3
 
     B *= 2
-    est = PauliPopRec.individual_recovery(B,A,R,w,n)
+    est = PauliPopRec.individual_recovery(B,Ax,Az,R,w,n)
     # answer should be -1.5 in this example
     @test est ≈ -1.5
 

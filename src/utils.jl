@@ -92,22 +92,44 @@ julia> star(A,B)
  1  0
  1  1
 ```
+------
+    star(B::Vector{<:Integer}, Ax::Array{<:Integer}, Az::Array{<:Integer})
+
+This is a fast version of the star product for broadcasting a vector across an array. 
+The length of `B` should match the number of columns of `Ax` and `Az`, and the sizes of `Ax` and `Az` should match. 
+No test is done to ensure this compatability.
+
+If given an integer array `A` with elements in {0,1,2,3}, then this returns the symplectic product between `A` and `B` across each row of `A` assuming the following is true: `A == 2 .* Az .+ Ax`. 
+This is equivalent to defining `Ax` and `Az` using `Ax, Az = bits(A)`.
 """
 star(A::Array{<:Integer},B::Array{<:Integer})::Array{Int8} = ((A .>> 1) .& B) .⊻ ((B .>> 1) .& A)
 
+star(B::Vector{<:Integer}, Ax::Array{<:Integer}, Az::Array{<:Integer})::Array{Int8} = Az .& hcat(B...) .⊻ Ax .& hcat((B .>> 1)...) 
+
 
 """
-    function individual_recovery(B::Vector{<:Integer}, A::Matrix{<:Integer}, R::Matrix{<:Integer}, w::Vector{Float64}, n::Integer)
+    bits(A::Array{<:Integer}) = (A .& eltype(A)(1) , A .>> 1)
 
-Computes the individual recovery estimate for the Pauli B from the probe states A, the results R, the weight vector w, and the number of qubits n.
+Decompose the array `A` such that `A == 2 * Az + Ax`, assuming `A` has elements in {0,1,2,3}. 
+"""
+bits(A::Array{<:Integer}) = (A .& eltype(A)(1) , A .>> 1)
+
+
+"""
+    individual_recovery(B::Vector{<:Integer}, Ax::Matrix{<:Integer}, Az::Matrix{<:Integer}, R::Matrix{<:Integer}, w::Vector{Float64}, n::Integer)
+
+Computes the individual recovery estimate for the Pauli B from the probe states `A == 2* Az + Ax`, the results `R`, the weight vector `w`, and the number of qubits `n`. 
+That is, we have `Ax = A .& 1` and `Az = A .>> 1` assuming that the elements of `A` are indeed in {0,1,2,3}. 
+
+
 
 This individual recovery function does not compute w or n for speed reasons.  
 This gets called in the inner loop of pauli_poprec, so speed matters.
 """
-function individual_recovery(B::Vector{<:Integer}, A::Matrix{<:Integer}, R::Matrix{<:Integer}, w::Vector{Float64}, n::Integer)::Float64
+function individual_recovery(B::Vector{<:Integer}, Ax::Matrix{<:Integer}, Az::Matrix{<:Integer}, R::Matrix{<:Integer}, w::Vector{Float64}, n::Integer)::Float64
     if all(B .== 0)
         return w' * (counts(sum(R, dims = 2),0:n))
     end
-    AB = star(A, hcat(B...) ) # hcat so that B broadcasts A row-wise.
+    AB = star(B,Ax,Az)
     w' * (counts(sum(AB .⊻  R, dims = 2),0:n) - counts(sum(AB, dims = 2),0:n) )
 end

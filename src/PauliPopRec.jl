@@ -131,7 +131,8 @@ function pauli_indrec(B::Vector{<:Integer}, A::Matrix{<:Integer}, R::Matrix{<:In
     @assert 0 ≤ v ≤ 1/4 "Erasure rate v should be in [0,1/4]."
     h = (2*v+1)/(2*v-2); # h = -1/2 when v = 0. Larger v for hearlded failures.
     w = h.^(0:t) / m
-    individual_recovery(B,A,R,w,t)
+    Ax, Az = bits(A)
+    individual_recovery(B,Ax,Az,R,w,t)
 end
 
 
@@ -178,15 +179,17 @@ function pauli_poprec(A::Matrix{<:Integer}, R::Matrix{<:Integer}, 𝛿::Float64,
     (m,n) = size(A)
     h = (2*v+1)/(2*v-2); # h = -1/2 when v = 0. Larger v for hearlded failures.
     w = h.^(0:n) / m
+    Ax, Az = bits(A)
     for j = 1:n
         Q = PauliChannel()
-        AA = A[:,1:j]
+        AAx = Ax[:,1:j]
+        AAz = Az[:,1:j]
         RR = R[:,1:j]
         ww = w[1:(j+1)]
         for prefx in keys(P)
             for c = Int8.(0:3)
                 B = vcat(prefx, c)
-                est = individual_recovery(B, AA, RR, ww, j)
+                est = individual_recovery(B, AAx, AAz, RR, ww, j)
                 if est > 𝛿
                     Q[B] = est
                 end
@@ -239,8 +242,9 @@ function pauli_stderr(P::PauliChannel, A::Matrix{<:Integer}, R::Matrix{<:Integer
     k = size(Q)[1]
     (m,n) = size(A)
     s = zeros(k)
+    Ax, Az = bits(A)
     for j = 1:k
-        AQ = star(A, Q[j,:]' .+ zeros(Int8, (m,n)) )
+        AQ = star(Q[j,:],Ax,Az) 
         s[j] = std(dropdims(h.^sum(AQ .⊻  R,dims=2) - h.^sum(AQ,dims=2),dims=2))
     end
     s/sqrt(m)
@@ -316,7 +320,8 @@ function pauli_totalrecall(A::Matrix{<:Integer}, R::Matrix{<:Integer}, v::Float6
     h = (2*v+1)/(2*v-2); # h = -1/2 when v = 0. Larger v for hearlded failures.
     w = h.^(0:n) / m
     p0 = w' * counts(sum(R, dims = 2),0:n)
-    s = pushfirst!([individual_recovery(reverse(digits(Int8, j,base=4,pad=n)),A,R,w,n) for j = 1:4^n-1], p0)
+    Ax, Az = bits(A)
+    s = pushfirst!([individual_recovery(reverse(digits(Int8, j,base=4,pad=n)),Ax,Az,R,w,n) for j = 1:4^n-1], p0)
     S = vcat(reverse.(digits.(Int8, findall(x -> x > 0, s) .- 1, base=4,pad=n))'...)
     s = s[s .> 0]
     Dict( [ S[i,:] for i=1:length(s)] .=> s )
