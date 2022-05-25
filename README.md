@@ -13,7 +13,7 @@ To get started with a little more explanation, see the [tutorial notebook](https
 If you have never installed `PauliPopRec` before, you can add it to your local repository with these commands. This only needs to be done once. 
 ```julia
 # add the package to your local installation
-using Pkg
+import Pkg
 Pkg.add("PauliPopRec")
 ```
 
