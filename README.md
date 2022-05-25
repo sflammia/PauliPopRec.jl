@@ -10,6 +10,14 @@ This is an implementation of the algorithm in S. T. Flammia and R. O'Donnell, "P
 
 To get started with a little more explanation, see the [tutorial notebook](https://github.com/sflammia/PauliPopRec/blob/main/docs/PauliPopRecTutorial.ipynb). Here is a rough sketch of how to use this package to estimate Pauli error rates. 
 
+If you have never installed `PauliPopRec` before, you can add it to your local repository with these commands. This only needs to be done once. 
+```julia
+# add the package to your local installation
+using Pkg
+Pkg.add("PauliPopRec")
+```
+
+Now whenever you want to load the package, simply type:
 
 ```julia
 # load the package
