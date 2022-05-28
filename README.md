@@ -1,6 +1,6 @@
 [![Tests](https://github.com/sflammia/PauliPopRec.jl/workflows/Tests/badge.svg)](https://github.com/sflammia/PauliPopRec.jl/actions?query=workflow%3ATests)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![arXiv](https://img.shields.io/badge/arXiv--b31b1b.svg)](https://arxiv.org/abs/2105.02885)
+[![arXiv](https://img.shields.io/badge/arXiv-2105.02885-b31b1b.svg)](https://arxiv.org/abs/2105.02885)
 
 # PauliPopRec.jl
 
